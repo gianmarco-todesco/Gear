@@ -4,13 +4,14 @@
 #include "Mesh.h"
 #include "Curve.h"
 
-class Gear : public Mesh
+class AbstractGear : public Mesh
 {
 protected:
-  Curve *m_curve;
+  AbstractCurve *m_curve;
+public:
+
   double m_rotation;
   QVector3D m_position;
-public:
 
   AbstractGear(AbstractCurve *curve);
   virtual ~AbstractGear();
