@@ -8,9 +8,9 @@ class Gear : public Mesh
 {
 protected:
   Curve *m_curve;
-public:
   double m_rotation;
   QVector3D m_position;
+public:
 
   AbstractGear(AbstractCurve *curve);
   virtual ~AbstractGear();
