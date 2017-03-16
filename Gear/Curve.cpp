@@ -16,7 +16,7 @@ void normalizePeriodicValue(double &x, int &q, double period)
   }
   else if(x<0.0)
   {
-    q = -1- (int)ceil(x/period); 
+    q = - (int)ceil(-x/period); 
     x -= q*period;
   }
   assert(0.0<=x && x<period);
@@ -33,7 +33,7 @@ QVector2D PolarFunction::getNormal(double phi) const
 {
   double h = 0.0001;
   QVector2D v = (getPoint(phi+h) - getPoint(phi-h)).normalized();
-  return QVector2D(-v.y(),v.x());
+  return QVector2D(v.y(),-v.x());
 }
 
 //=============================================================================
@@ -154,6 +154,16 @@ void Curve::check1()
     }
     assert(s<=s1);
   }
+
+  n = m_pts.count();
+  for(int i=0;i<n;i++)
+  {
+    double phi = 2*M_PI * (i + 0.5) / n;
+    assert(m_pts[i].phi < phi && phi < (i+1<n ? m_pts[i+1].phi : 2*M_PI));
+    int j = (int)floor(phi*n/(2*M_PI));
+    assert(j==i);
+  }
+
   qDebug() << "Check1 ok";
 }
 
@@ -166,8 +176,9 @@ int Curve::getIndexFromPhi(double phi, double *off) const
   int j = (int)floor(phi*n/roundAngle);
   assert(0<=j && j<n);
   double phi0 = m_pts[j].phi;
+  if(phi0>phi && j>0) {j--; phi0 = m_pts[j].phi;}
   double phi1 = j+1<n ? m_pts[j+1].phi : roundAngle;
-  assert(phi0<=phi && phi<phi1);
+  assert(phi0<=phi && phi<=phi1);
   if(off) *off = (phi-phi0)/(phi1-phi0);
   return j;
 }
@@ -471,6 +482,7 @@ public:
 
 };
 
+/*
 
 AbstractCurve *makeEllipse(int n, double r, double e)
 {  
@@ -479,6 +491,9 @@ AbstractCurve *makeEllipse(int n, double r, double e)
   return curve;
 }
 
+*/
+
+/*
 
 class SquareFunction : public CurveFunction {
   double m_edgeLength, m_cornerRadius;
@@ -515,4 +530,63 @@ AbstractCurve *makeSquare(int n, double edgeLength, double cornerRadius)
   return curve;
 }
 
+
+*/
+
+namespace {
+
+
+class EllipsePolarFunction : public PolarFunction {
+  double m_r,m_e;
+public:
+  EllipsePolarFunction(double r, double e) : m_r(r), m_e(e) {}
+  double getRadius(double phi) const {
+    return m_r/(1.0 + m_e*cos(phi));
+  }
+};
+
+}
+
+
+Curve *makeEllipse(double r, double e)
+{  
+  Curve *curve = new Curve();
+  curve->build(EllipsePolarFunction(r,e));
+  return curve;
+}
+
+class SquarePolarFunction : public PolarFunction {
+  double m_radius, m_cornerRadius;
+  double m_a,m_b;
+public:
+  SquarePolarFunction(double radius, double cornerRadius) 
+    : m_radius(radius)
+    , m_cornerRadius(cornerRadius)
+  {
+    m_a = m_radius - m_cornerRadius;
+    m_b = sqrt(m_a*m_a+m_radius*m_radius);
+  }
+  double getRadius(double phi) const {
+    double cs = cos(phi), sn = sin(phi);
+    double absCs = fabs(cs), absSn = fabs(sn); 
+    double r = m_radius/qMax(absCs, absSn);
+    if(r > m_b)
+    {
+      QVector2D q(cs>0 ? m_a : -m_a, sn>0 ? m_a : -m_a);
+      double cu = cs*q.x() + sn*q.y(), cc = q.lengthSquared();
+      double dsc = cu*cu-cc+m_cornerRadius*m_cornerRadius;
+      assert(dsc>0.0);
+      r = cu+sqrt(dsc);
+    }
+    return r;
+  }
+};
+
+
+Curve *makeSquare(double radius, double cornerRadius)
+{
+  Curve *curve = new Curve();
+  curve->build(SquarePolarFunction(radius,cornerRadius));
+  return curve;
+}
 

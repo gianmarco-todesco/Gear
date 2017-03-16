@@ -96,9 +96,8 @@ public:
 };
 
 
-AbstractCurve *makeEllipse(int n, double r, double e);
-AbstractCurve *makeSquare(int n, double edgeLength, double cornerRadius);
- 
+Curve *makeEllipse(double r, double e);
+Curve *makeSquare(double radius, double cornerRadius);
 
 
 #endif

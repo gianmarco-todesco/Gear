@@ -2,7 +2,7 @@
 #define SCENE_H
 
 
-class AbstractGear;
+class Gear;
 class GearLink;
 class Viewer;
 #include <QMatrix4x4>
@@ -12,7 +12,7 @@ class Viewer;
 
 class Scene
 {
-  QVector<AbstractGear*> m_gears;
+  QVector<Gear*> m_gears;
   QVector<GearLink*> m_links;
 
 public:

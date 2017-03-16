@@ -5,34 +5,43 @@
 
 Scene::Scene()
 {
-  /*
-  double r = 0.5, e = 0.7;
-  m_gears.append(new AbstractGear(makeEllipse(256,r,e)));
-  m_gears.append(new AbstractGear(makeEllipse(256,r,e)));
-  m_gears.append(new AbstractGear(makeEllipse(256,r,e)));
-  m_gears.append(new AbstractGear(makeEllipse(256,r,e)));
+  
+  if(false)
+  {
+    double r = 0.5, e = 0.7;
+    int m = 4;
+    double dist = r/(1.0+e)+r/(1.0-e);
 
-  double dist = 0.5/(1.0+e)+0.5/(1.0-e);
+    for(int i=0;i<m;i++)
+    {
+      Gear *gear = new Gear(makeEllipse(r,e));
+      gear->setPosition( QVector3D(-dist+dist*i,0,0));
+      m_gears.append(gear);
+    }
+  
+  
 
-  m_gears[0]->m_position = QVector3D(-dist,0,0);
-  m_gears[1]->m_position = QVector3D(    0,0,0);
-  m_gears[2]->m_position = QVector3D( dist,0,0);
-  m_gears[3]->m_position = QVector3D( dist*2,0,0);
+    for(int i=1;i<4;i++)
+      m_links.append(new GearLink(m_gears[i-1], m_gears[i]));
+  }
+  else
+  {
+    m_gears.append(new Gear(makeEllipse(0.5,0.6)));   
+    m_gears.append(new Gear(makeSquare(0.5,0.3)));
+    m_gears[1]->setPosition(QVector3D(1,0,0));
 
-  m_links.append(new GearLink(m_gears[0], m_gears[1]));
-  m_links.append(new GearLink(m_gears[1], m_gears[2]));
-  m_links.append(new GearLink(m_gears[2], m_gears[3]));
-  */
-  m_gears.append(new AbstractGear(makeSquare(256,1.0,0.1)));
+  }
+  // m_gears.append(new Gear(makeSquare(256,1.0,0.1)));
+  // m_gears.append(new Gear(makeEllipse(0.5,0.6)));
 
-  double dist = 1.2;
+  // double dist = 1.2;
 
-  m_gears.append(makeConjugate(m_gears[0], dist));
+ // m_gears.append(makeConjugate(m_gears[0], dist));
 
-  m_gears[0]->m_position = QVector3D(-dist/2,0,0);
-  m_gears[1]->m_position = QVector3D( dist/2,0,0);
+  //m_gears[0]->setPosition(QVector3D(-dist/2,0,0));
+  //m_gears[1]->m_position = QVector3D( dist/2,0,0);
 
-  m_links.append(new GearLink(m_gears[0], m_gears[1]));
+  //m_links.append(new GearLink(m_gears[0], m_gears[1]));
 
   for(int i=0;i<m_gears.count();i++)
   {
@@ -63,12 +72,12 @@ void Scene::draw(Viewer *viewer)
   double cameraDist = 10;
   for(int i=0;i<m_gears.count();i++)
   {
-    AbstractGear *gear = m_gears[i];
+    Gear *gear = m_gears[i];
     QMatrix4x4 matrix;
     matrix.translate(0.0, 0.0, -cameraDist);
     matrix.rotate(m_rotation);
-    matrix.translate(gear->m_position);
-    matrix.rotate(gear->m_rotation, 0,0,1);
+    matrix.translate(gear->getPosition());
+    matrix.rotate(gear->getRotation(), 0,0,1);
     gear->setMatrix(matrix);
     viewer->draw(gear);
   }
@@ -76,7 +85,7 @@ void Scene::draw(Viewer *viewer)
 
 void Scene::drag(int dx, int dy)
 {
-  m_gears[0]->m_rotation += dx*0.5;
+  m_gears[0]->setRotation(m_gears[0]->getRotation() + dx*0.5);
   for(int i=0;i<m_links.count();i++)
   {
     m_links[i]->update();

@@ -2,18 +2,18 @@
 #include "Curve.h"
 #include <qmath.h>
 
-AbstractGear::AbstractGear(AbstractCurve *curve)
+Gear::Gear(Curve *curve)
   : m_curve(curve)
   , m_rotation(0)
 {
 }
 
-AbstractGear::~AbstractGear()
+Gear::~Gear()
 {
   delete m_curve;
 }
 
-void AbstractGear::build()
+void Gear::build()
 {
   int m = 20;
   int toothCount = 64;
@@ -22,13 +22,13 @@ void AbstractGear::build()
   QVector<ShapePoint> shape(n);
   //Curves::Ellipse crv(1.0,0.7);
   //crv.build(1000);
-  AbstractCurve &crv = *m_curve;
+  Curve &crv = *m_curve;
 
   for(int i=0;i<n;i++) 
   {
-    double crvt = crv.getTfromS(crv.getLength()*i/n);
-    QVector2D pos1 = crv.getPointFromT(crvt);
-    QVector2D nrm1 = crv.getNormalFromT(crvt);
+    double phi = crv.getPhifromS(crv.getLength()*i/n);
+    QVector2D pos1 = crv.getPointFromPhi(phi);
+    QVector2D nrm1 = crv.getNormalFromPhi(phi);
     QVector2D nrm0 = pos1.normalized();
 
     shape[i].p0 = nrm0 * 0.1;
@@ -78,16 +78,18 @@ void AbstractGear::build()
     while(ja+1<jb-1)
     {
       addFace(ja*8+1, (ja+1)*8+1, (jb-1)*8+1, jb*8+1);
+      addFace(ja*8+4, jb*8+4, (jb-1)*8+4, (ja+1)*8+4);
       ja++;
       jb--;
     }
     addFace(ia*8+1, ib*8+1, ib*8, ia*8);
+    addFace(ia*8+5, ib*8+5, ib*8+4, ia*8+4);
     while(ib+1<=ia+m)
     {
       int ib1 = (ib+1)%n;
       addFace(ib*8+1, ib1*8+1, ib1*8, ib*8);
+      addFace(ib*8+5, ib1*8+5, ib1*8+4, ib*8+4);
       ib++;
-
     }
   }
 
@@ -96,9 +98,9 @@ void AbstractGear::build()
 
 void GearLink::update()
 {
-  double s = m_driver->getCurve()->getSfromPhi(M_PI * m_driver->m_rotation / 180.0);
+  double s = m_driver->getCurve()->getSfromPhi(M_PI * m_driver->getRotation() / 180.0);
   s = m_driven->getCurve()->getLength()*0.5 - s;
-  m_driven->m_rotation = 180 + 180 * m_driven->getCurve()->getPhifromS(s) / M_PI;
+  m_driven->setRotation(180 + 180 * m_driven->getCurve()->getPhifromS(s) / M_PI);
 }
 
 
@@ -115,7 +117,7 @@ Gear1::Gear1()
 
 double getNorm(const QVector2D &p) { return sqrt(p.x()*p.x()+p.y()*p.y()); }
 
-
+/*
 AbstractGear *makeConjugate(AbstractGear *g, double distance)
 {
   AbstractCurve *srcCrv = g->getCurve();
@@ -139,4 +141,6 @@ AbstractGear *makeConjugate(AbstractGear *g, double distance)
   crv->build(pts);
   return new AbstractGear(crv);
 }
+*/
+
 

@@ -58,10 +58,19 @@ void foo()
 }
 
 
+void foo2()
+{
+  Curve *crv = makeEllipse(0.5,0.7);
+  crv->getSfromPhi(6.2046454908398410);
+  
+}
+
+
 int main(int argc, char *argv[])
 {
   QApplication a(argc, argv);
-  foo();
+  foo2();
+  // foo();
   Viewer w;
   w.show();
   return a.exec();
