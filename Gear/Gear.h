@@ -26,7 +26,7 @@ public:
 };
 
 
-// Gear *makeConjugate(Gear *g, double distance);
+Gear *makeConjugate(Gear *g, double distance);
 
 
 class GearLink {

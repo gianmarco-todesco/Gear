@@ -66,10 +66,21 @@ void foo2()
 }
 
 
+void foo3()
+{
+  Curve *crv1 = makeSquare(0.5,0.1);
+  Curve *crv2 = makeConjugate(crv1, 1.0);
+  delete crv1;
+  delete crv2;
+
+
+}
+
+
 int main(int argc, char *argv[])
 {
   QApplication a(argc, argv);
-  foo2();
+  foo3();
   // foo();
   Viewer w;
   w.show();

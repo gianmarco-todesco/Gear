@@ -23,6 +23,7 @@ class Curve {
   struct Point {
     double s;
     double phi;
+    double radius;
     QVector2D pos, norm;
   };
   bool m_isOpen;
@@ -43,6 +44,8 @@ public:
 
   QVector2D getPointFromPhi(double phi) const;
   QVector2D getNormalFromPhi(double phi) const;
+
+  double getRadiusFromPhi(double phi) const;
 
   double getLength() const { return m_length; }
   double getTfromS(double s) const;
@@ -99,6 +102,7 @@ public:
 Curve *makeEllipse(double r, double e);
 Curve *makeSquare(double radius, double cornerRadius);
 
+Curve *makeConjugate(const Curve *curve, double dist);
 
 #endif
 

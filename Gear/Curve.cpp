@@ -59,15 +59,16 @@ void Curve::build(const PolarFunction &f)
   
   m_pts[0].s = 0;
   m_pts[0].phi = 0.0;
-  m_pts[0].pos = QVector2D(f.getRadius(0.0), 0.0);
-
+  m_pts[0].radius = f.getRadius(0.0);
+  m_pts[0].pos = QVector2D(m_pts[0].radius, 0.0);
   double totPhi = 2*M_PI;
 
   for(int i=1; i<n; i++)
   {
     Point &pt = m_pts[i];
     double phi = pt.phi = totPhi * i/n;
-    pt.pos = f.getRadius(phi) * QVector2D(cos(phi),sin(phi));
+    pt.radius = f.getRadius(phi);
+    pt.pos = pt.radius * QVector2D(cos(phi),sin(phi));
     m_length += (pt.pos - m_pts[i-1].pos).length();
     pt.s = m_length;
   }
@@ -92,6 +93,7 @@ void Curve::build(const QVector<QVector2D> &pts)
   m_pts[0].s = 0;
   m_pts[0].phi = 0.0;
   m_pts[0].pos = pts[0];
+  m_pts[0].radius = pts[0].x();
 
   for(int i=1; i<n; i++)
   {
@@ -99,6 +101,8 @@ void Curve::build(const QVector<QVector2D> &pts)
     pt.pos = pts[i];
     double phi = atan2(pt.pos.y(), pt.pos.x());
     if(phi<0.0)phi+=2*M_PI;
+    pt.phi = phi;
+    pt.radius = pt.pos.length();
     m_length += (pt.pos - m_pts[i-1].pos).length();
     pt.s = m_length;
   }
@@ -177,6 +181,7 @@ int Curve::getIndexFromPhi(double phi, double *off) const
   assert(0<=j && j<n);
   double phi0 = m_pts[j].phi;
   if(phi0>phi && j>0) {j--; phi0 = m_pts[j].phi;}
+  if(j+1<n && m_pts[j+1].phi<=phi) {j++; phi0 = m_pts[j].phi;}
   double phi1 = j+1<n ? m_pts[j+1].phi : roundAngle;
   assert(phi0<=phi && phi<=phi1);
   if(off) *off = (phi-phi0)/(phi1-phi0);
@@ -204,6 +209,19 @@ QVector2D Curve::getNormalFromPhi(double phi) const
   QVector2D p1 = j+1<m_pts.count() ? m_pts[j+1].norm : m_pts[0].norm;
   return (p0*(1-t) + p1*t).normalized();
 }
+
+
+double Curve::getRadiusFromPhi(double phi) const
+{
+  int q;
+  normalizePeriodicValue(phi, q, 2*M_PI);
+  double t;
+  int j = getIndexFromPhi(phi, &t);
+  double r0 = m_pts[j].radius;
+  double r1 = j+1<m_pts.count() ? m_pts[j+1].radius : m_pts[0].radius;
+  return r0*(1-t) + r1*t;
+}
+
 
 
 double Curve::getSfromPhi(double phi) const
@@ -590,3 +608,66 @@ Curve *makeSquare(double radius, double cornerRadius)
   return curve;
 }
 
+
+struct MyPoint { double s, phi, r; };
+struct MyPointPair { MyPoint src, dst; };
+
+Curve *makeConjugate(const Curve *srcCurve, double dist)
+{
+
+  QVector<MyPointPair> zip;
+  MyPointPair oldg, curg;
+
+
+  curg.src.phi = M_PI;
+  curg.src.s = srcCurve->getSfromPhi(M_PI);
+  curg.src.r = srcCurve->getRadiusFromPhi(M_PI);
+
+  curg.dst.s = curg.dst.phi = 0.0;
+  curg.dst.r = dist - curg.src.r;
+
+  oldg = curg;
+  zip.append(curg);
+
+  const double ds = 0.001;
+  const double ds2 = ds*ds;
+  for(;;)
+  {
+    curg.src.s = oldg.src.s - ds;
+    curg.src.phi = srcCurve->getPhifromS(curg.src.s);
+    curg.src.r = srcCurve->getRadiusFromPhi(curg.src.phi);
+
+    curg.dst.s = oldg.dst.s + ds;
+    curg.dst.r = dist - curg.src.r;
+    double oldr = oldg.dst.r;
+    double curr = curg.dst.r;
+    double dphi = acos((curr*curr+oldr*oldr-ds2)/(2*oldr*curr)); 
+    assert(dphi);
+    curg.dst.phi = oldg.dst.phi + dphi; 
+    zip.push_back(curg);
+    oldg = curg;
+    if(curg.dst.phi>2*M_PI) break;
+    if((zip.count()%1000)==0)
+    {
+      qDebug() << curg.dst.phi;
+    }
+  }
+
+  QVector<QVector2D> pts;
+  int n = TickCount;
+  pts.resize(n);
+  int j = 0;
+  for(int i=0;i<n;i++)
+  {
+    double phi = 2*M_PI*i/n;
+    while(zip[j+1].dst.phi<=phi) j++;
+    assert(zip[j].dst.phi<=phi && phi<zip[j+1].dst.phi);
+    double t = (phi - zip[j].dst.phi)/(zip[j+1].dst.phi - zip[j].dst.phi);
+    double r = (1-t)*zip[j].dst.r + t*zip[j+1].dst.r;
+    pts[i] = r*QVector2D(cos(phi), sin(phi));
+  }
+
+  Curve *curve = new Curve();
+  curve->build(pts);
+  return curve;
+}

@@ -15,14 +15,15 @@ Gear::~Gear()
 
 void Gear::build()
 {
+  Curve &crv = *m_curve;
   int m = 20;
-  int toothCount = 64;
+  int toothCount = (int)floor(crv.getLength()/0.07);
   int n = toothCount * m;
   struct ShapePoint { QVector3D p0,p1,nrm0,nrm1; }; 
   QVector<ShapePoint> shape(n);
   //Curves::Ellipse crv(1.0,0.7);
   //crv.build(1000);
-  Curve &crv = *m_curve;
+  
 
   for(int i=0;i<n;i++) 
   {
@@ -98,9 +99,13 @@ void Gear::build()
 
 void GearLink::update()
 {
-  double s = m_driver->getCurve()->getSfromPhi(M_PI * m_driver->getRotation() / 180.0);
-  s = m_driven->getCurve()->getLength()*0.5 - s;
-  m_driven->setRotation(180 + 180 * m_driven->getCurve()->getPhifromS(s) / M_PI);
+  double driverAngle = M_PI * m_driver->getRotation() / 180.0;
+  double s = m_driver->getCurve()->getLength()*0.5 - 
+             m_driver->getCurve()->getSfromPhi(M_PI - driverAngle);
+  double drivenAngle = 180 * m_driven->getCurve()->getPhifromS(-s) / M_PI;
+  m_driven->setRotation(drivenAngle);
+
+
 }
 
 
@@ -144,3 +149,10 @@ AbstractGear *makeConjugate(AbstractGear *g, double distance)
 */
 
 
+Gear *makeConjugate(Gear *srcGear, double distance)
+{
+  Curve *curve = makeConjugate(srcGear->getCurve(), distance);
+  Gear *gear = new Gear(curve);
+  gear->setPosition(srcGear->getPosition()+QVector2D(-distance,0));
+  return gear;
+}

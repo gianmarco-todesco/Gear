@@ -26,10 +26,12 @@ Scene::Scene()
   }
   else
   {
-    m_gears.append(new Gear(makeEllipse(0.5,0.6)));   
+    double dist = 1.5;
     m_gears.append(new Gear(makeSquare(0.5,0.3)));
-    m_gears[1]->setPosition(QVector3D(1,0,0));
-
+    m_gears.append(makeConjugate(m_gears[0], dist));
+    
+    // m_gears[1]->setPosition(QVector3D(1,0,0));
+    m_links.append(new GearLink(m_gears[0], m_gears[1]));
   }
   // m_gears.append(new Gear(makeSquare(256,1.0,0.1)));
   // m_gears.append(new Gear(makeEllipse(0.5,0.6)));

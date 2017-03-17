@@ -22,7 +22,7 @@ void main()
 	
 
 	vec3 n = normalize( Normal );
-	vec3 s = normalize( vec3(0.0,1.0,-1.0) - Position );
+	vec3 s = normalize( vec3(0.0,2.0,-1.0) - Position );
 	vec3 v = normalize( -Position );
 	vec3 r = reflect( -s, n );
  
